@@ -14,7 +14,7 @@ import GenePage from './GenePage'
 const AutosizedGenePage = withWindowSize(GenePage)
 
 const query = `
-query Gene($geneId: String, $geneSymbol: String, $referenceGenome: ReferenceGenomeId!) {
+query Gene($geneId: String, $geneSymbol: String, $referenceGenome: ReferenceGenomeId!, $datasetId: DatasetId!, $includeShortTandemRepeats: Boolean!) {
   gene(gene_id: $geneId, gene_symbol: $geneSymbol, reference_genome: $referenceGenome) {
     reference_genome
     gene_id
@@ -211,16 +211,20 @@ query Gene($geneId: String, $geneSymbol: String, $referenceGenome: ReferenceGeno
       obs_exp
       chisq_diff_null
     }
+    short_tandem_repeats(dataset: $datasetId) @include(if: $includeShortTandemRepeats) {
+      id
+    }
   }
 }
 `
 
 const GenePageContainer = ({ datasetId, geneIdOrSymbol }) => {
-  const variables = geneIdOrSymbol.startsWith('ENSG')
-    ? { geneId: geneIdOrSymbol }
-    : { geneSymbol: geneIdOrSymbol }
-
-  variables.referenceGenome = referenceGenomeForDataset(datasetId)
+  const variables = {
+    [geneIdOrSymbol.startsWith('ENSG') ? 'geneId' : 'geneSymbol']: geneIdOrSymbol,
+    datasetId,
+    referenceGenome: referenceGenomeForDataset(datasetId),
+    includeShortTandemRepeats: datasetId === 'gnomad_r3',
+  }
 
   return (
     <BaseQuery query={query} variables={variables}>

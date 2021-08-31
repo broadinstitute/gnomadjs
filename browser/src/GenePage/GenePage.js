@@ -6,13 +6,14 @@ import styled from 'styled-components'
 
 import { RegionViewer, Track } from '@gnomad/region-viewer'
 import { TranscriptPlot } from '@gnomad/track-transcripts'
-import { Button } from '@gnomad/ui'
+import { Badge, Button } from '@gnomad/ui'
 
 import ConstraintTable from '../ConstraintTable/ConstraintTable'
 import { labelForDataset } from '../datasets'
 import DocumentTitle from '../DocumentTitle'
 import GnomadPageHeading from '../GnomadPageHeading'
 import InfoButton from '../help/InfoButton'
+import Link from '../Link'
 import RegionalConstraintTrack from '../RegionalConstraintTrack'
 import RegionCoverageTrack from '../RegionPage/RegionCoverageTrack'
 import { TrackPage, TrackPageSection } from '../TrackPage'
@@ -206,6 +207,11 @@ class GenePage extends Component {
       }),
       // eslint-disable-next-line react/forbid-prop-types
       exac_regional_missense_constraint_regions: PropTypes.any,
+      short_tandem_repeats: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string.isRequired,
+        })
+      ),
     }).isRequired,
     geneId: PropTypes.string.isRequired,
     width: PropTypes.number.isRequired,
@@ -279,6 +285,15 @@ class GenePage extends Component {
             <div style={{ maxWidth: '50%' }}>
               <GeneInfo gene={gene} />
               <GeneFlags gene={gene} />
+              {gene.short_tandem_repeats && gene.short_tandem_repeats.length > 0 && (
+                <p>
+                  <Badge level="info">Note</Badge> This gene contains a{' '}
+                  <Link to={`/short-tandem-repeat/${gene.short_tandem_repeats[0].id}`}>
+                    short tandem repeat
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
             <div>
               <h2>Constraint {gene.chrom !== 'M' && <InfoButton topic="constraint" />}</h2>

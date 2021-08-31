@@ -13,7 +13,7 @@ import RegionPage from './RegionPage'
 const AutosizedRegionPage = withWindowSize(RegionPage)
 
 const query = `
-  query Region($chrom: String!, $start: Int!, $stop: Int!, $referenceGenome: ReferenceGenomeId!) {
+  query Region($chrom: String!, $start: Int!, $stop: Int!, $referenceGenome: ReferenceGenomeId!, $datasetId: DatasetId!, $includeShortTandemRepeats: Boolean!) {
     region(chrom: $chrom, start: $start, stop: $stop, reference_genome: $referenceGenome) {
       genes {
         gene_id
@@ -33,6 +33,9 @@ const query = `
             stop
           }
         }
+      }
+      short_tandem_repeats(dataset: $datasetId) @include(if: $includeShortTandemRepeats) {
+        id
       }
     }
   }
@@ -55,7 +58,14 @@ const RegionPageContainer = ({ datasetId, regionId }) => {
   return (
     <Query
       query={query}
-      variables={{ chrom, start, stop, referenceGenome }}
+      variables={{
+        chrom,
+        start,
+        stop,
+        referenceGenome,
+        datasetId,
+        includeShortTandemRepeats: datasetId === 'gnomad_r3',
+      }}
       loadingMessage="Loading region"
       errorMessage="Unable to load region"
       success={data => data.region}
