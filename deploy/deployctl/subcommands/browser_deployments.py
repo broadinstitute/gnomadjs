@@ -5,7 +5,6 @@ import os
 import string
 import sys
 import typing
-import yaml
 
 from deployctl.config import config
 from deployctl.shell import kubectl, get_most_recent_tag, image_exists, get_k8s_deployments
@@ -127,28 +126,8 @@ def print_pool_name(pool: str) -> str:
 
 def determine_deployment_pool(path: str) -> str:
     with open(path) as f:
-        content = yaml.safe_load(f)
-
-    patches = content.get("patches", [])
-    for patch in patches:
-        if isinstance(patch, dict):
-            patch_content = yaml.safe_load(patch.get("patch", ""))
-        else:
-            patch_content = yaml.safe_load(patch)
-
-        if (
-            patch_content
-            and patch_content.get("kind") == "Deployment"
-            and patch_content.get("spec", {})
-            .get("template", {})
-            .get("spec", {})
-            .get("nodeSelector", {})
-            .get("cloud.google.com/gke-nodepool")
-            == "demo-pool"
-        ):
-            return "demo-pool"
-
-    return "main-pool"
+        content = f.read()
+    return "demo-pool" if "'demo-pool'" in content or '"demo-pool"' in content else "main-pool"
 
 
 def list_deployments() -> None:
