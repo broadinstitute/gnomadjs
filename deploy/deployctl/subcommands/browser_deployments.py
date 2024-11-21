@@ -5,6 +5,7 @@ import os
 import string
 import sys
 import typing
+import yaml
 
 from deployctl.config import config
 from deployctl.shell import kubectl, get_most_recent_tag, image_exists, get_k8s_deployments
@@ -115,19 +116,58 @@ def deployments_directory() -> str:
     return path
 
 
+def print_pool_name(pool: str) -> str:
+    if pool == "demo-pool":
+        return "(demo)"
+    if pool == "main-pool":
+        return ""
+
+    return pool
+
+
+def determine_deployment_pool(path: str) -> str:
+    with open(path) as f:
+        content = yaml.safe_load(f)
+
+    patches = content.get("patches", [])
+    for patch in patches:
+        if isinstance(patch, dict):
+            patch_content = yaml.safe_load(patch.get("patch", ""))
+        else:
+            patch_content = yaml.safe_load(patch)
+
+        if (
+            patch_content
+            and patch_content.get("kind") == "Deployment"
+            and patch_content.get("spec", {})
+            .get("template", {})
+            .get("spec", {})
+            .get("nodeSelector", {})
+            .get("cloud.google.com/gke-nodepool")
+            == "demo-pool"
+        ):
+            return "demo-pool"
+
+    return "main-pool"
+
+
 def list_deployments() -> None:
     print("Local configurations")
     print("====================")
     paths = reversed(sorted(glob.iglob(f"{deployments_directory()}/*/kustomization.yaml"), key=os.path.getmtime))
     for path in paths:
-        print(os.path.basename(os.path.dirname(path)))
+        name = os.path.basename(os.path.dirname(path))
+        pool = determine_deployment_pool(path)
+        print(f"{name} {print_pool_name(pool)}")
 
     print()
 
     print("Cluster deployments")
     print("===================")
-    for deployment in get_k8s_deployments("component=gnomad-browser"):
-        print(deployment[len("gnomad-browser-") :])
+    for deployment, pool in get_k8s_deployments("component=gnomad-browser"):
+        print(f"{deployment[len('gnomad-browser-'):]} {print_pool_name(pool)}")
+
+    print()
 
 
 def create_deployment(name: str, browser_tag: str = None, api_tag: str = None, demo: bool = False) -> None:
