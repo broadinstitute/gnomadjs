@@ -22,6 +22,7 @@ import {
   isExac,
   hasCopyNumberVariants,
   isV2,
+  isV4,
 } from '@gnomad/dataset-metadata/metadata'
 import ConstraintTable from '../ConstraintTable/ConstraintTable'
 import VariantCooccurrenceCountsTable, {
@@ -134,7 +135,7 @@ export type Gene = GeneMetadata & {
     id: string
   }[]
   exac_regional_missense_constraint_regions?: any
-  gnomad_v2_regional_missense_constraint?: RegionalMissenseConstraint
+  gnomad_regional_missense_constraint?: RegionalMissenseConstraint
   variants: Variant[]
   structural_variants: StructuralVariant[]
   copy_number_variants: CopyNumberVariant[]
@@ -552,9 +553,9 @@ const GenePage = ({ datasetId, gene, geneId }: Props) => {
           />
         )}
 
-        {isV2(datasetId) && (
+        {(isV2(datasetId) || isV4(datasetId)) && (
           <RegionalMissenseConstraintTrack
-            regionalMissenseConstraint={gene.gnomad_v2_regional_missense_constraint}
+            regionalMissenseConstraint={gene.gnomad_regional_missense_constraint}
             gene={gene}
           />
         )}
